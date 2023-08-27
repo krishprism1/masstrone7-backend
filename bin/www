@@ -1,0 +1,9 @@
+const app = require("../app");
+const http = require("http");
+
+// This is to ensure that the app uses (UTC) as the default time zone.
+// process.env.TZ = "UTC";
+
+http.createServer(app).listen(app.get("port"), () => {
+  console.log(`MassTron is active on port ${app.get("port")}`);
+});
