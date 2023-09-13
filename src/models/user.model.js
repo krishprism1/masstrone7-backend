@@ -11,14 +11,17 @@ const userSchema = new Schema(
       type: String,
       default: "",
     },
-    sponsorId: {
-      type: String,
-      default: "",
-    },
     userId: {
       type: String,
       default: "",
     },
+    sponsorId: {
+      type: String,
+      default: "",
+    },
+    joinedAt: Number,
+    pathHistory: [String],
+    team: [],
   },
   {
     timestamps: true,

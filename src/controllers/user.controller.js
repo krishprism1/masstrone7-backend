@@ -2,9 +2,18 @@ const { User } = require("../models/user.model");
 const { getAuthToken } = require("../services/auth.service");
 
 module.exports = (function () {
-  this.signUp = async (req, res, next) => {
+  this.firstSignUp = async (req, res, next) => {
     try {
-      const { walletAddress, transactionHash, sponsorId, userId } = req.body;
+      const {
+        walletAddress,
+        transactionHash,
+        userId,
+        sponsorId,
+        joinedAt,
+        pathHistory,
+        team,
+      } = req.body;
+
       const user = await User.findOne({
         walletAddress: walletAddress,
       });
@@ -14,13 +23,86 @@ module.exports = (function () {
           message: "User already exists!",
         });
       }
+
       const newUser = new User({
         walletAddress: walletAddress,
         transactionHash: transactionHash,
-        sponsorId: sponsorId,
         userId: userId,
+        sponsorId: sponsorId,
+        joinedAt: joinedAt,
+        pathHistory: pathHistory,
+        team: team,
       });
+
       await newUser.save();
+
+      return res.status(200).json({
+        status: true,
+        message: "User registered successfully!",
+        data: { ...newUser.toJSON() },
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+  this.signUp = async (req, res, next) => {
+    try {
+      const { walletAddress, transactionHash, userId, sponsorId } = req.body;
+
+      const sponsor = await User.findOne({ userId: sponsorId });
+
+      if (!sponsor) {
+        return res.status(400).json({
+          status: false,
+          message: "This sponsor does not exists!",
+        });
+      }
+
+      const user = await User.findOne({
+        walletAddress: walletAddress,
+      });
+      if (user) {
+        return res.status(400).json({
+          status: false,
+          message: "User already exists!",
+        });
+      }
+
+      const path = sponsor.pathHistory.length
+        ? [...sponsor.pathHistory, sponsor.userId]
+        : [sponsor.userId];
+
+      const newUser = new User({
+        walletAddress: walletAddress,
+        transactionHash: transactionHash,
+        userId: userId,
+        sponsorId: sponsorId,
+        joinedAt: sponsor.joinedAt + 1,
+        pathHistory: path,
+        team: [],
+      });
+
+      await newUser.save();
+      let count = 0;
+      for (let index = path.length - 1; index >= 0; index--) {
+        const element = path[index];
+        const details = await User.findOne({ userId: element });
+        let tempTeam = details.team;
+
+        const check = Array.isArray(tempTeam[count]);
+        // console.log(check, count, "checkcount");
+        if (check) {
+          tempTeam[count].push(userId);
+          // console.log(tempTeam, `with ${count}`);
+          await User.findOneAndUpdate({ userId: element }, { team: tempTeam });
+          count++;
+        } else {
+          tempTeam[count] = [userId];
+          // console.log(tempTeam, `with ${count}`);
+          await User.findOneAndUpdate({ userId: element }, { team: tempTeam });
+          count++;
+        }
+      }
 
       return res.status(200).json({
         status: true,
