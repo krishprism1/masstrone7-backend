@@ -1,3 +1,4 @@
+const { Boost } = require("../models/boost.model");
 const { User } = require("../models/user.model");
 const { getAuthToken } = require("../services/auth.service");
 
@@ -171,6 +172,47 @@ module.exports = (function () {
         status: true,
         message: "User details fetched successfully!",
         data: { ...details.toJSON() },
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+  this.boostInvest = async (req, res, next) => {
+    try {
+      const { userId, boostAmount } = req.body;
+      const userDetails = await User.findOne({ userId: userId });
+      if (!userDetails) {
+        return res.status(400).json({
+          message: "User does not exists!",
+          status: false,
+        });
+      }
+
+      const highestBoost = await Boost.findOne().sort({ boostId: -1 });
+      const nextBoostId = highestBoost ? highestBoost.boostId + 1 : 1;
+
+      const newBoost = new Boost({
+        walletAddress: userDetails.walletAddress,
+        userId: userId,
+        boostId: nextBoostId,
+        boostAmount: boostAmount,
+      });
+
+      const newDetails = await newBoost.save();
+
+      const boostIdThreshold = newDetails.boostId - 3;
+      const updateDetails = await Boost.updateMany(
+        { boostId: { $lt: boostIdThreshold }, canClaim: false },
+        { $set: { canClaim: true } }
+      );
+
+      return res.status(200).json({
+        status: true,
+        message: "User details fetched successfully!",
+        data: {
+          newDetails: newDetails.toJSON(),
+          updateDetails: newDetails.toJSON(),
+        },
       });
     } catch (err) {
       next(err);

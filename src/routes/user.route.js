@@ -6,6 +6,7 @@ const {
   allUser,
   getUser,
   firstSignUp,
+  boostInvest,
 } = require("../controllers/user.controller");
 const { isAuthenticated } = require("../middlewares/auth.middleware");
 
@@ -14,5 +15,6 @@ userRoute.post("/signup", signUp);
 userRoute.post("/login", login);
 userRoute.get("/get-users", [isAuthenticated, allUser]);
 userRoute.get("/get-user/:id", [isAuthenticated, getUser]);
+userRoute.post("/boost-invest", [isAuthenticated, boostInvest]);
 
 module.exports = userRoute;
