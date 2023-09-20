@@ -202,7 +202,7 @@ module.exports = (function () {
 
       const boostIdThreshold = newDetails.boostId - 3;
       const updateDetails = await Boost.updateMany(
-        { boostId: { $lt: boostIdThreshold }, canClaim: false },
+        { boostId: { $lte: boostIdThreshold }, canClaim: false },
         { $set: { canClaim: true } }
       );
 
@@ -211,7 +211,7 @@ module.exports = (function () {
         message: "User details fetched successfully!",
         data: {
           newDetails: newDetails.toJSON(),
-          updateDetails: newDetails.toJSON(),
+          updateDetails: updateDetails,
         },
       });
     } catch (err) {
