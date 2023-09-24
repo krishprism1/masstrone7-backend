@@ -4,6 +4,7 @@ const { getAuthToken } = require("../services/auth.service");
 const { tronWeb } = require("../utils/tron");
 const abi = require("../abi.json")
 
+const { getAuthToken, decodeAuthToken } = require("../services/auth.service");
 
 module.exports = (function () {
   this.firstSignUp = async (req, res, next) => {
@@ -149,6 +150,25 @@ module.exports = (function () {
         message: "Logged In successfully!",
         data: { ...user.toJSON(), token },
       });
+    } catch (err) {
+      next(err);
+    }
+  };
+  this.authCheck = async (req, res, next) => {
+    try {
+      const token = req.params.token;
+      const data = await decodeAuthToken(token);
+      if (data) {
+        return res.status(200).json({
+          status: true,
+          message: "Token authenticated successfully!",
+        });
+      } else {
+        return res.status(400).json({
+          status: false,
+          message: "Token not authenticated!",
+        });
+      }
     } catch (err) {
       next(err);
     }

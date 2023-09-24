@@ -5,6 +5,8 @@ module.exports = (function () {
     const schema = Joi.object({
       walletAddress: Joi.string().required(),
       transactionHash: Joi.string().default(""),
+      userId: Joi.string().default(""),
+      sponsorId: Joi.string().default(""),
     });
     validateRequest(req, res, next, schema);
   };
