@@ -5,7 +5,6 @@ module.exports = (function () {
     try {
       // Get the Authorization header
       const authHeader = req.headers && req.headers["authorization"];
-
       if (!authHeader) {
         const err = new Error("ACCESS_DENIED");
         next(err);
@@ -14,6 +13,7 @@ module.exports = (function () {
         const tokenParts = authHeader.split(" ");
 
         if (tokenParts.length !== 2 || tokenParts[0] !== "Bearer") {
+
           const err = new Error("ACCESS_DENIED");
           next(err);
         } else {

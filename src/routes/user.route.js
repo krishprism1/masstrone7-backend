@@ -17,7 +17,7 @@ userRoute.post("/signup", [validateUserData, signUp]);
 userRoute.post("/login", login);
 userRoute.get("/auth-check/:token", authCheck)
 userRoute.get("/get-users", [isAuthenticated, allUser]);
-userRoute.get("/get-user/:id", [isAuthenticated, getUser]);
+userRoute.get("/get-user/:wallet", [isAuthenticated, getUser]);
 userRoute.post("/boost-invest", [isAuthenticated, boostInvest]);
 
 module.exports = userRoute;
