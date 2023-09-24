@@ -1,10 +1,9 @@
 const { Boost } = require("../models/boost.model");
 const { User } = require("../models/user.model");
-const { getAuthToken } = require("../services/auth.service");
 const { tronWeb } = require("../utils/tron");
-const abi = require("../abi.json")
-
 const { getAuthToken, decodeAuthToken } = require("../services/auth.service");
+const abi = require("../abi.json");
+
 
 module.exports = (function () {
   this.firstSignUp = async (req, res, next) => {
@@ -55,8 +54,10 @@ module.exports = (function () {
       const { walletAddress, transactionHash, userId, sponsorId } = req.body;
       const sponsor = await User.findOne({ userId: sponsorId });
       tronWeb.setAddress(walletAddress);
-      let contractInstance = await tronWeb.contract().at(process.env.CONTRACT_ADDR);
-      let _user = await contractInstance.users(walletAddress).call()
+      let contractInstance = await tronWeb
+        .contract()
+        .at(process.env.CONTRACT_ADDR);
+      let _user = await contractInstance.users(walletAddress).call();
       if (!_user) {
         return res.status(400).json({
           status: false,
@@ -105,12 +106,12 @@ module.exports = (function () {
         const check = Array.isArray(tempTeam[count]);
         // console.log(check, count, "checkcount");
         if (check) {
-          tempTeam[count].push(userId);
+          tempTeam[count].push(String(userId));
           // console.log(tempTeam, `with ${count}`);
           await User.findOneAndUpdate({ userId: element }, { team: tempTeam });
           count++;
         } else {
-          tempTeam[count] = [userId];
+          tempTeam[count] = [String(userId)];
           // console.log(tempTeam, `with ${count}`);
           await User.findOneAndUpdate({ userId: element }, { team: tempTeam });
           count++;
@@ -126,15 +127,41 @@ module.exports = (function () {
       next(err);
     }
   };
+  // this.login = async (req, res, next) => {
+  //   try {
+  //     const { walletAddress } = req.body;
+  //     tronWeb.setAddress(walletAddress);
+  //     let contractInstance = await tronWeb
+  //       .contract()
+  //       .at(process.env.CONTRACT_ADDR);
+  //     let _user = await contractInstance.users(walletAddress).call();
+  //     const user = await User.findOne({
+  //       walletAddress: walletAddress,
+  //       userId: `${parseInt(_user[0]?._hex)}`,
+  //     });
+  //     if (!user) {
+  //       return res.status(400).json({
+  //         message: "Please Register First!",
+  //         status: false,
+  //       });
+  //     }
+  //     const token = await getAuthToken({ _id: user._id });
+  //     res.header("Authorization", `Bearer ${token}`);
+
+  //     return res.status(200).json({
+  //       status: true,
+  //       message: "Logged In successfully!",
+  //       data: { ...user.toJSON(), token },
+  //     });
+  //   } catch (err) {
+  //     next(err);
+  //   }
+  // };
   this.login = async (req, res, next) => {
     try {
       const { walletAddress } = req.body;
-      tronWeb.setAddress(walletAddress);
-      let contractInstance = await tronWeb.contract().at(process.env.CONTRACT_ADDR);
-      let _user = await contractInstance.users(walletAddress).call()
       const user = await User.findOne({
         walletAddress: walletAddress,
-        userId: `${parseInt(_user[0]?._hex)}`
       });
       if (!user) {
         return res.status(400).json({

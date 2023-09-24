@@ -23,7 +23,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(bodyParser.json({ limit: "1gb" }));
 app.use(bodyParser.urlencoded({ extended: false, limit: "1gb" }));
 
-var whitelist = ["http://localhost:3000"];
+var whitelist = ["http://localhost:8000", "http://localhost:3000"];
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -58,7 +58,7 @@ app.all("/*", (req, res, next) => {
   res.header("Access-Control-Request-Headers", "*");
   res.header(
     "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Headers, x-auth-token, x-l10n-locale, Cache-Control, timeout"
+    "Origin, Authorization, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Headers, x-auth-token, x-l10n-locale, Cache-Control, timeout"
   );
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
