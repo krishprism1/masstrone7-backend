@@ -13,6 +13,7 @@ function exitHandler(options) {
   mongoose.connection.close();
   process.exit();
 }
+
 // for ensuring db connection is closed properly and any necessary cleanup is done before the application exits.
 process.on("SIGINT", exitHandler.bind(null, { cleanup: true }));
 
@@ -22,7 +23,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(bodyParser.json({ limit: "1gb" }));
 app.use(bodyParser.urlencoded({ extended: false, limit: "1gb" }));
 
-var whitelist = ["http://localhost:8000"];
+var whitelist = ["http://localhost:3000"];
 
 const corsOptions = {
   origin: (origin, callback) => {

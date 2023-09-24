@@ -1,6 +1,9 @@
 const { Boost } = require("../models/boost.model");
 const { User } = require("../models/user.model");
 const { getAuthToken } = require("../services/auth.service");
+const { tronWeb } = require("../utils/tron");
+const abi = require("../abi.json")
+
 
 module.exports = (function () {
   this.firstSignUp = async (req, res, next) => {
@@ -49,8 +52,16 @@ module.exports = (function () {
   this.signUp = async (req, res, next) => {
     try {
       const { walletAddress, transactionHash, userId, sponsorId } = req.body;
-
       const sponsor = await User.findOne({ userId: sponsorId });
+      tronWeb.setAddress(walletAddress);
+      let contractInstance = await tronWeb.contract().at(process.env.CONTRACT_ADDR);
+      let _user = await contractInstance.users(walletAddress).call()
+      if (!_user) {
+        return res.status(400).json({
+          status: false,
+          message: "This User is not registered!",
+        });
+      }
 
       if (!sponsor) {
         return res.status(400).json({
@@ -117,12 +128,16 @@ module.exports = (function () {
   this.login = async (req, res, next) => {
     try {
       const { walletAddress } = req.body;
+      tronWeb.setAddress(walletAddress);
+      let contractInstance = await tronWeb.contract().at(process.env.CONTRACT_ADDR);
+      let _user = await contractInstance.users(walletAddress).call()
       const user = await User.findOne({
         walletAddress: walletAddress,
+        userId: `${parseInt(_user[0]?._hex)}`
       });
       if (!user) {
         return res.status(400).json({
-          message: "User does not exists!",
+          message: "Please Register First!",
           status: false,
         });
       }
