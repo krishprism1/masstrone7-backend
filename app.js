@@ -38,7 +38,7 @@ const corsOptions = {
 };
 
 // only allows whitlisted domains
-app.use(cors(corsOptions));
+app.use(cors());
 
 // for all registered API routes
 app.use("/api/v1", api);

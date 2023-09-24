@@ -1,9 +1,7 @@
 const { Boost } = require("../models/boost.model");
 const { User } = require("../models/user.model");
-const { getAuthToken } = require("../services/auth.service");
 const { tronWeb } = require("../utils/tron");
 const abi = require("../abi.json")
-
 const { getAuthToken, decodeAuthToken } = require("../services/auth.service");
 
 module.exports = (function () {
