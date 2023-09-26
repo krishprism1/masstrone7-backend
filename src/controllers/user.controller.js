@@ -200,6 +200,42 @@ module.exports = (function () {
       next(err);
     }
   };
+  this.validateRegister = async (req, res, next) => {
+    try {
+      const { walletAddress, sponsorId } = req.query;
+      const user = await User.findOne({
+        walletAddress: walletAddress,
+      });
+      const sponsor = await User.findOne({
+        userId: sponsorId,
+      });
+
+      const response = {
+        status: true,
+        message: ""
+      }
+      if (user) {
+        response.status = false
+        response.message = "Already Registerd!"
+      } else if (!sponsor) {
+        response.status = false
+        response.message = "Invalid SponsorID!"
+      }
+
+      if (user) {
+        return res.status(400).json(response);
+      } else if (!sponsor) {
+        return res.status(400).json(response);
+      } else {
+        return res.status(200).json({
+          status: true,
+        });
+      }
+
+    } catch (err) {
+      next(err);
+    }
+  };
   this.allUser = async (req, res, next) => {
     try {
       const user = await User.find({});
