@@ -88,6 +88,7 @@ module.exports = (function () {
         : [sponsor.userId];
 
       const calcPackageType = globalPackageType[Number(packageType)];
+      console.log(typeof calcPackageType, calcPackageType, "calcPackageType");
 
       const newUser = new User({
         walletAddress: walletAddress,
@@ -103,11 +104,12 @@ module.exports = (function () {
       await newUser.save();
 
       const calDirectIncome =
-        (+calcPackageType * +incomePercentage["direct"]) / 100;
+        (Number(calcPackageType) * Number(incomePercentage["direct"])) / 100;
+      console.log(typeof calDirectIncome, calDirectIncome, "calDirectIncome");
 
       await User.findOneAndUpdate(
         { userId: sponsorId },
-        { directIncome: calDirectIncome }
+        { directIncome: Number(calDirectIncome) }
       );
 
       let count = 0;
@@ -125,7 +127,10 @@ module.exports = (function () {
           if (count < 10) {
             await User.findOneAndUpdate(
               { userId: element },
-              { teamIncome: currentTeamIncome + incomePercentage["team"] }
+              {
+                teamIncome:
+                  Number(currentTeamIncome) + Number(incomePercentage["team"]),
+              }
             );
           }
           await User.findOneAndUpdate({ userId: element }, { team: tempTeam });
@@ -136,7 +141,10 @@ module.exports = (function () {
           if (count < 10) {
             await User.findOneAndUpdate(
               { userId: element },
-              { teamIncome: currentTeamIncome + incomePercentage["team"] }
+              {
+                teamIncome:
+                  Number(currentTeamIncome) + Number(incomePercentage["team"]),
+              }
             );
           }
           await User.findOneAndUpdate({ userId: element }, { team: tempTeam });
@@ -353,7 +361,9 @@ module.exports = (function () {
   this.isBoosted = async (req, res, next) => {
     try {
       const { userId } = req.query;
-      const latestItem = await User.findOne({ userId: userId }).sort({ createdAt: -1 })
+      const latestItem = await User.findOne({ userId: userId }).sort({
+        createdAt: -1,
+      });
       if (!latestItem) {
         return res.status(200).json({
           status: true,
