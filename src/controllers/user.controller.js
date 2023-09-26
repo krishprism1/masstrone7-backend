@@ -343,7 +343,7 @@ module.exports = (function () {
   };
   this.isBoosted = async (req, res, next) => {
     try {
-      const { userId } = req.body;
+      const { userId } = req.query;
       const latestItem = await User.findOne({ userId: userId }).sort({ createdAt: -1 })
       if (!latestItem) {
         return res.status(200).json({
