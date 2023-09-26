@@ -3,7 +3,7 @@ const { User } = require("../models/user.model");
 const { tronWeb } = require("../utils/tron");
 const { getAuthToken, decodeAuthToken } = require("../services/auth.service");
 const abi = require("../abi.json");
-
+const { globalPackageType, incomePercentage } = require("../utils/constant");
 
 module.exports = (function () {
   this.firstSignUp = async (req, res, next) => {
@@ -51,7 +51,8 @@ module.exports = (function () {
   };
   this.signUp = async (req, res, next) => {
     try {
-      const { walletAddress, transactionHash, userId, sponsorId } = req.body;
+      const { walletAddress, transactionHash, userId, sponsorId, packageType } =
+        req.body;
       const sponsor = await User.findOne({ userId: sponsorId });
       tronWeb.setAddress(walletAddress);
       let contractInstance = await tronWeb
@@ -86,33 +87,58 @@ module.exports = (function () {
         ? [...sponsor.pathHistory, sponsor.userId]
         : [sponsor.userId];
 
+      const calcPackageType = globalPackageType[Number(packageType)];
+
       const newUser = new User({
         walletAddress: walletAddress,
         transactionHash: transactionHash,
         userId: userId,
         sponsorId: sponsorId,
         joinedAt: sponsor.joinedAt + 1,
+        packageType: calcPackageType,
         pathHistory: path,
         team: [],
       });
 
       await newUser.save();
+
+      const calDirectIncome =
+        (+calcPackageType * +incomePercentage["direct"]) / 100;
+
+      await User.findOneAndUpdate(
+        { userId: sponsorId },
+        { directIncome: calDirectIncome }
+      );
+
       let count = 0;
       for (let index = path.length - 1; index >= 0; index--) {
         const element = path[index];
         const details = await User.findOne({ userId: element });
         let tempTeam = details.team;
+        let currentTeamIncome = details.teamIncome;
 
         const check = Array.isArray(tempTeam[count]);
         // console.log(check, count, "checkcount");
         if (check) {
           tempTeam[count].push(String(userId));
           // console.log(tempTeam, `with ${count}`);
+          if (count < 10) {
+            await User.findOneAndUpdate(
+              { userId: element },
+              { teamIncome: currentTeamIncome + incomePercentage["team"] }
+            );
+          }
           await User.findOneAndUpdate({ userId: element }, { team: tempTeam });
           count++;
         } else {
           tempTeam[count] = [String(userId)];
           // console.log(tempTeam, `with ${count}`);
+          if (count < 10) {
+            await User.findOneAndUpdate(
+              { userId: element },
+              { teamIncome: currentTeamIncome + incomePercentage["team"] }
+            );
+          }
           await User.findOneAndUpdate({ userId: element }, { team: tempTeam });
           count++;
         }
@@ -212,14 +238,14 @@ module.exports = (function () {
 
       const response = {
         status: true,
-        message: ""
-      }
+        message: "",
+      };
       if (user) {
-        response.status = false
-        response.message = "Already Registerd!"
+        response.status = false;
+        response.message = "Already Registerd!";
       } else if (!sponsor) {
-        response.status = false
-        response.message = "Invalid SponsorID!"
+        response.status = false;
+        response.message = "Invalid SponsorID!";
       }
 
       if (user) {
@@ -231,7 +257,6 @@ module.exports = (function () {
           status: true,
         });
       }
-
     } catch (err) {
       next(err);
     }

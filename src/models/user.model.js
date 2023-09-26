@@ -19,6 +19,18 @@ const userSchema = new Schema(
       type: String,
       default: "",
     },
+    packageType: {
+      type: Number,
+      default: 1,
+    },
+    directIncome: {
+      type: Number,
+      default: 0,
+    },
+    teamIncome: {
+      type: Number,
+      default: 0,
+    },
     joinedAt: Number,
     pathHistory: [String],
     team: [],
