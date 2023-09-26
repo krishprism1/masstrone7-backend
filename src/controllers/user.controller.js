@@ -291,10 +291,19 @@ module.exports = (function () {
         });
       }
 
+      const boostDetails = await Boost.findOne({ walletAddress })
+        .sort({
+          createdAt: -1,
+        })
+        .lean();
+
       return res.status(200).json({
         status: true,
         message: "User details fetched successfully!",
-        data: { ...details.toJSON() },
+        data: {
+          ...details.toJSON(),
+          boostAmount: boostDetails?.boostAmount,
+        },
       });
     } catch (err) {
       next(err);
@@ -348,8 +357,8 @@ module.exports = (function () {
       if (!latestItem) {
         return res.status(200).json({
           status: true,
-        });        
-      }else if(!latestItem.isClaimed){
+        });
+      } else if (!latestItem.isClaimed) {
         return res.status(400).json({
           message: "You have an active boosting!",
           status: false,

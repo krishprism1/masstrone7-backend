@@ -16,6 +16,7 @@ const boostSchema = new Schema(
     },
     boostAmount: {
       type: Number,
+      default: 100,
     },
     canClaim: {
       type: Boolean,
