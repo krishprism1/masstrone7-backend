@@ -9,6 +9,7 @@ const {
   boostInvest,
   authCheck,
   validateRegister,
+  isBoosted,
 } = require("../controllers/user.controller");
 const { isAuthenticated } = require("../middlewares/auth.middleware");
 const { validateUserData } = require("../middlewares/user.middleware");
@@ -21,5 +22,6 @@ userRoute.get("/auth-check/:token", authCheck)
 userRoute.get("/get-users", [isAuthenticated, allUser]);
 userRoute.get("/get-user/:wallet", [isAuthenticated, getUser]);
 userRoute.post("/boost-invest", [isAuthenticated, boostInvest]);
+userRoute.get("/is-boost", [isAuthenticated, isBoosted]);
 
 module.exports = userRoute;

@@ -316,5 +316,27 @@ module.exports = (function () {
       next(err);
     }
   };
+  this.isBoosted = async (req, res, next) => {
+    try {
+      const { userId } = req.body;
+      const latestItem = await User.findOne({ userId: userId }).sort({ createdAt: -1 })
+      if (!latestItem) {
+        return res.status(200).json({
+          status: true,
+        });        
+      }else if(!latestItem.isClaimed){
+        return res.status(400).json({
+          message: "You have an active boosting!",
+          status: false,
+        });
+      } else {
+        return res.status(200).json({
+          status: true,
+        });
+      }
+    } catch (err) {
+      next(err);
+    }
+  };
   return this;
 })();
