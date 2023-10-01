@@ -18,6 +18,10 @@ const boostSchema = new Schema(
       type: Number,
       default: 100,
     },
+    cashBackAmount: {
+      type: Number,
+      default: 0,
+    },
     canClaim: {
       type: Boolean,
       default: false,

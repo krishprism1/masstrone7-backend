@@ -3,7 +3,11 @@ const { User } = require("../models/user.model");
 const { tronWeb } = require("../utils/tron");
 const { getAuthToken, decodeAuthToken } = require("../services/auth.service");
 const abi = require("../abi.json");
-const { globalPackageType, incomePercentage } = require("../utils/constant");
+const {
+  globalPackageType,
+  incomePercentage,
+  boostConstant,
+} = require("../utils/constant");
 
 module.exports = (function () {
   this.firstSignUp = async (req, res, next) => {
@@ -340,18 +344,35 @@ module.exports = (function () {
 
       const newDetails = await newBoost.save();
 
-      const boostIdThreshold = newDetails.boostId - 3;
-      const updateDetails = await Boost.updateMany(
-        { boostId: { $lte: boostIdThreshold }, canClaim: false },
-        { $set: { canClaim: true } }
-      );
+      // const boostIdThreshold = newDetails.boostId - 3;
+      const boostIdThreshold = Math.max(newDetails.boostId - 3, 1);
+
+      let onAmount = 0;
+      for (let index = nextBoostId; index >= boostIdThreshold; index--) {
+        const element = await Boost.findOne({ boostId: index });
+        if (element && element.boostId !== nextBoostId) {
+          onAmount = onAmount + element.boostAmount;
+          const toDeduct =
+            (onAmount * boostConstant.admin) / 100 +
+            boostConstant.coinReserve +
+            boostConstant.coinBoostingLevel;
+          element.cashBackAmount = onAmount - toDeduct;
+          element.save();
+        }
+      }
+
+      if (nextBoostId >= 4) {
+        const updateDetails = await Boost.updateMany(
+          { boostId: { $lte: boostIdThreshold }, canClaim: false },
+          { $set: { canClaim: true } }
+        );
+      }
 
       return res.status(200).json({
         status: true,
-        message: "User details fetched successfully!",
+        message: "New Boost added successfully!",
         data: {
           newDetails: newDetails.toJSON(),
-          updateDetails: updateDetails,
         },
       });
     } catch (err) {

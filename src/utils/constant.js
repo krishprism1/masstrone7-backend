@@ -14,7 +14,14 @@ const globalPackageType = {
   8: 12800,
 };
 
+const boostConstant = {
+  admin: 10, // percentage
+  coinReserve: 20, // coin
+  coinBoostingLevel: 10, // coin
+};
+
 module.exports = {
   incomePercentage,
   globalPackageType,
+  boostConstant,
 };
