@@ -23,11 +23,23 @@ const userSchema = new Schema(
       type: Number,
       default: 1,
     },
-    directIncome: {
+    unpaidDirectIncome: {
       type: Number,
       default: 0,
     },
-    teamIncome: {
+    unpaidTeamIncome: {
+      type: Number,
+      default: 0,
+    },
+    paidDirectIncome: {
+      type: Number,
+      default: 0,
+    },
+    paidTeamIncome: {
+      type: Number,
+      default: 0,
+    },
+    paidBoostIncome: {
       type: Number,
       default: 0,
     },

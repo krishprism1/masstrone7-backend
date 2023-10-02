@@ -5,8 +5,9 @@ const { getAuthToken, decodeAuthToken } = require("../services/auth.service");
 const abi = require("../abi.json");
 const {
   globalPackageType,
-  incomePercentage,
+  directIncomeConstant,
   boostConstant,
+  teamIncomeConstant,
 } = require("../utils/constant");
 
 module.exports = (function () {
@@ -17,6 +18,7 @@ module.exports = (function () {
         transactionHash,
         userId,
         sponsorId,
+        packageType,
         joinedAt,
         pathHistory,
         team,
@@ -32,11 +34,14 @@ module.exports = (function () {
         });
       }
 
+      const calcPackageType = +globalPackageType[Number(packageType)];
+
       const newUser = new User({
         walletAddress: walletAddress,
         transactionHash: transactionHash,
         userId: userId,
         sponsorId: sponsorId,
+        packageType: calcPackageType,
         joinedAt: joinedAt,
         pathHistory: pathHistory,
         team: team,
@@ -91,8 +96,7 @@ module.exports = (function () {
         ? [...sponsor.pathHistory, sponsor.userId]
         : [sponsor.userId];
 
-      const calcPackageType = globalPackageType[Number(packageType)];
-      console.log(typeof calcPackageType, calcPackageType, "calcPackageType");
+      const calcPackageType = +globalPackageType[Number(packageType)];
 
       const newUser = new User({
         walletAddress: walletAddress,
@@ -107,13 +111,16 @@ module.exports = (function () {
 
       await newUser.save();
 
-      const calDirectIncome =
-        (Number(calcPackageType) * Number(incomePercentage["direct"])) / 100;
-      console.log(typeof calDirectIncome, calDirectIncome, "calDirectIncome");
+      const calcDirectIncome =
+        (Number(calcPackageType) * Number(directIncomeConstant["direct"])) /
+        100;
 
       await User.findOneAndUpdate(
         { userId: sponsorId },
-        { directIncome: Number(calDirectIncome) }
+        {
+          unpaidDirectIncome:
+            Number(sponsor.unpaidDirectIncome) + Number(calcDirectIncome),
+        }
       );
 
       let count = 0;
@@ -121,33 +128,36 @@ module.exports = (function () {
         const element = path[index];
         const details = await User.findOne({ userId: element });
         let tempTeam = details.team;
-        let currentTeamIncome = details.teamIncome;
+        let currentTeamIncome = details.unpaidTeamIncome;
+        let calcTeamIncome =
+          (Number(calcPackageType) * Number(teamIncomeConstant[count + 1])) /
+          100;
 
         const check = Array.isArray(tempTeam[count]);
         // console.log(check, count, "checkcount");
         if (check) {
-          tempTeam[count].push(String(userId));
-          // console.log(tempTeam, `with ${count}`);
           if (count < 10) {
+            tempTeam[count].push(String(userId));
+            // console.log(tempTeam, `with ${count}`);
             await User.findOneAndUpdate(
               { userId: element },
               {
-                teamIncome:
-                  Number(currentTeamIncome) + Number(incomePercentage["team"]),
+                unpaidTeamIncome:
+                  Number(currentTeamIncome) + Number(calcTeamIncome),
               }
             );
           }
           await User.findOneAndUpdate({ userId: element }, { team: tempTeam });
           count++;
         } else {
-          tempTeam[count] = [String(userId)];
-          // console.log(tempTeam, `with ${count}`);
           if (count < 10) {
+            tempTeam[count] = [String(userId)];
+            // console.log(tempTeam, `with ${count}`);
             await User.findOneAndUpdate(
               { userId: element },
               {
-                teamIncome:
-                  Number(currentTeamIncome) + Number(incomePercentage["team"]),
+                unpaidTeamIncome:
+                  Number(currentTeamIncome) + Number(calcTeamIncome),
               }
             );
           }
@@ -343,7 +353,6 @@ module.exports = (function () {
       });
 
       const newDetails = await newBoost.save();
-
       // const boostIdThreshold = newDetails.boostId - 3;
       const boostIdThreshold = Math.max(newDetails.boostId - 3, 1);
 
@@ -357,7 +366,7 @@ module.exports = (function () {
             boostConstant.coinReserve +
             boostConstant.coinBoostingLevel;
           element.cashBackAmount = onAmount - toDeduct;
-          element.save();
+          await element.save();
         }
       }
 
