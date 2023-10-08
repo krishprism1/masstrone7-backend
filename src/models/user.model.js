@@ -43,6 +43,18 @@ const userSchema = new Schema(
       type: Number,
       default: 0,
     },
+    safeDirectIncome: {
+      type: Object,
+      default: {
+        0: 0,
+      },
+    },
+    safeTeamIncome: {
+      type: Object,
+      default: {
+        0: 0,
+      },
+    },
     joinedAt: Number,
     pathHistory: [String],
     team: [],

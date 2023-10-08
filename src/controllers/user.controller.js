@@ -125,6 +125,9 @@ module.exports = (function () {
 
       let count = 0;
       for (let index = path.length - 1; index >= 0; index--) {
+        if (count >= 10) {
+          break; // Exit the loop if count is greater than or equal to 10
+        }
         const element = path[index];
         const details = await User.findOne({ userId: element });
         let tempTeam = details.team;
@@ -408,6 +411,172 @@ module.exports = (function () {
           status: true,
         });
       }
+    } catch (err) {
+      next(err);
+    }
+  };
+  this.upgradePackage = async (req, res, next) => {
+    try {
+      const { userId } = req.body;
+      const userDetails = await User.findOne({ userId: userId });
+      if (!userDetails) {
+        return res.status(400).json({
+          message: "User does not exists!",
+          status: false,
+        });
+      }
+
+      function getKeyByValue(object, value) {
+        return Object.keys(object).find((key) => object[key] === value);
+      }
+      const prevPackageKey = getKeyByValue(
+        globalPackageType,
+        userDetails.packageType
+      );
+      const calcUpPackageType = +globalPackageType[Number(prevPackageKey) + 1];
+
+      let sponsorDetails;
+      if (userDetails.joinedAt !== 0) {
+        sponsorDetails = await User.findOne({
+          sponsorId: userDetails.sponsorId,
+        });
+        if (!sponsorDetails) {
+          return res.status(400).json({
+            message: "Sponsor of this user does not exists!",
+            status: false,
+          });
+        }
+      }
+
+      const calcDirectIncome =
+        (Number(calcUpPackageType) * Number(directIncomeConstant["direct"])) /
+        100;
+
+      if (
+        userDetails.joinedAt !== 0 &&
+        sponsorDetails.packageType === calcUpPackageType
+      ) {
+        await User.findOneAndUpdate(
+          { userId: userDetails.sponsorId },
+          {
+            unpaidDirectIncome:
+              Number(sponsorDetails.unpaidDirectIncome) +
+              Number(calcDirectIncome),
+          }
+        );
+      } else if (
+        userDetails.joinedAt !== 0 &&
+        sponsorDetails.packageType !== calcUpPackageType
+      ) {
+        let tempData = { ...sponsorDetails.safeDirectIncome };
+        tempData[calcUpPackageType] = Number(calcDirectIncome);
+
+        await User.findOneAndUpdate(
+          { userId: userDetails.sponsorId },
+          {
+            safeDirectIncome: tempData,
+          }
+        );
+      }
+
+      const path = [...userDetails.pathHistory];
+      let count = 0;
+      for (let index = path.length - 1; index >= 0; index--) {
+        if (count >= 10) {
+          break; // Exit the loop if count is greater than or equal to 10
+        }
+        const element = path[index];
+        const details = await User.findOne({ userId: element });
+        let calcTeamIncome =
+          (Number(calcUpPackageType) * Number(teamIncomeConstant[count + 1])) /
+          100;
+        if (details.packageType === calcUpPackageType) {
+          if (count < 10) {
+            await User.findOneAndUpdate(
+              { userId: element },
+              {
+                unpaidTeamIncome:
+                  Number(details.unpaidTeamIncome) + Number(calcTeamIncome),
+              }
+            );
+          }
+          count++;
+        } else {
+          if (count < 10) {
+            let tempData = { ...details.safeTeamIncome };
+            tempData[calcUpPackageType] = Number(calcTeamIncome);
+
+            await User.findOneAndUpdate(
+              { userId: element },
+              {
+                safeTeamIncome: tempData,
+              }
+            );
+          }
+          count++;
+        }
+      }
+
+      const safeDirectKeys = Object.keys(userDetails.safeDirectIncome);
+      const safeTeamKeys = Object.keys(userDetails.safeTeamIncome);
+
+      if (safeDirectKeys.length) {
+        const reqKeys = safeDirectKeys.filter(
+          (key) => key <= calcUpPackageType
+        );
+        if (reqKeys.length) {
+          for (let index = 0; index < reqKeys.length; index++) {
+            let tempSafeDirectObj = { ...userDetails.safeDirectIncome };
+            const element = reqKeys[index];
+            const toUpdate = userDetails.safeDirectIncome[element];
+            delete tempSafeDirectObj[element];
+            await User.findOneAndUpdate(
+              { userId: userId },
+              {
+                unpaidDirectIncome:
+                  Number(userDetails.unpaidDirectIncome) + Number(toUpdate),
+                safeDirectIncome: tempSafeDirectObj,
+              }
+            );
+          }
+        }
+      }
+
+      if (safeTeamKeys.length) {
+        const reqKeys = safeTeamKeys.filter((key) => key <= calcUpPackageType);
+        if (reqKeys.length) {
+          for (let index = 0; index < reqKeys.length; index++) {
+            let tempSafeTeamObj = { ...userDetails.safeTeamIncome };
+            const element = reqKeys[index];
+            const toUpdate = userDetails.safeTeamIncome[element];
+            delete tempSafeTeamObj[element];
+            await User.findOneAndUpdate(
+              { userId: userId },
+              {
+                unpaidTeamIncome:
+                  Number(userDetails.unpaidTeamIncome) + Number(toUpdate),
+                safeTeamIncome: tempSafeTeamObj,
+              }
+            );
+          }
+        }
+      }
+
+      const updatedDetails = await User.findOneAndUpdate(
+        { userId: userId },
+        {
+          packageType: calcUpPackageType,
+        },
+        { new: true }
+      );
+
+      return res.status(200).json({
+        status: true,
+        message: "Package upgraded successfully!",
+        data: {
+          updatedDetails: updatedDetails.toJSON(),
+        },
+      });
     } catch (err) {
       next(err);
     }
