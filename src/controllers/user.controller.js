@@ -422,7 +422,7 @@ module.exports = (function () {
         "walletAddress userId boostId"
       );
       if (!details) {
-        return res.status(400).json({
+        return res.status(200).json({
           message: "User does not boosted yet!",
           status: false,
         });
