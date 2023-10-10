@@ -415,6 +415,45 @@ module.exports = (function () {
       next(err);
     }
   };
+  this.getBoost = async (req, res, next) => {
+    try {
+      const walletAddress = req.params.wallet;
+      const details = await Boost.findOne({ walletAddress }).select(
+        "walletAddress userId boostId"
+      );
+      if (!details) {
+        return res.status(400).json({
+          message: "User does not boosted yet!",
+          status: false,
+        });
+      }
+
+      const unpaidBoostDetails = await Boost.find({
+        walletAddress: walletAddress,
+        canClaim: true,
+        isClaimed: false,
+      });
+
+      let unpaidBoostAmount = 0;
+      if (unpaidBoostDetails) {
+        for (let index = 0; index < unpaidBoostDetails.length; index++) {
+          const element = unpaidBoostDetails[index];
+          unpaidBoostAmount = unpaidBoostAmount + element.cashBackAmount;
+        }
+      }
+
+      return res.status(200).json({
+        status: true,
+        message: "User's boost details fetched successfully!",
+        data: {
+          ...details.toJSON(),
+          unpaidBoostAmount: unpaidBoostAmount,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
   this.upgradePackage = async (req, res, next) => {
     try {
       const { userId } = req.body;

@@ -11,6 +11,7 @@ const {
   validateRegister,
   isBoosted,
   upgradePackage,
+  getBoost,
 } = require("../controllers/user.controller");
 const { isAuthenticated } = require("../middlewares/auth.middleware");
 const { validateUserData } = require("../middlewares/user.middleware");
@@ -24,6 +25,7 @@ userRoute.get("/get-users", [isAuthenticated, allUser]);
 userRoute.get("/get-user/:wallet", [isAuthenticated, getUser]);
 userRoute.post("/boost-invest", [isAuthenticated, boostInvest]);
 userRoute.get("/is-boost", [isAuthenticated, isBoosted]);
+userRoute.get("/get-boost/:wallet", [isAuthenticated, getBoost]);
 userRoute.post("/upgrade-package", [isAuthenticated, upgradePackage]);
 
 module.exports = userRoute;
